@@ -296,6 +296,36 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .cam-cancel:hover{color:var(--ink);border-color:var(--ink-2);}
 
+/* 摄像头失败卡片（不再静默跳过） */
+.cam-error{
+  position:absolute;inset:0;z-index:6;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;
+  background:rgba(244,238,229,.94);backdrop-filter:blur(4px);
+  border-radius:inherit;
+}
+.mirror-view.has-error .cam-error{display:flex;}
+.cam-error-title{
+  font-family:var(--f-display);font-weight:500;font-size:18px;
+  color:var(--terra-deep);margin-bottom:10px;
+}
+.cam-error-msg{
+  font-size:13px;color:var(--ink);line-height:1.6;margin-bottom:8px;
+  max-width:80%;
+}
+.cam-error-diag{
+  font-family:var(--f-deco);font-size:10.5px;color:var(--ink-3);
+  letter-spacing:.06em;margin-bottom:18px;word-break:break-all;padding:0 12px;
+}
+.cam-error-actions{display:flex;gap:10px;}
+.cam-error-btn{
+  padding:9px 18px;border-radius:var(--r-sm);font-size:12px;letter-spacing:.1em;
+  background:var(--ink);color:var(--cream);
+}
+.cam-error-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);}
+.cam-error-btn:hover{background:var(--terra);}
+.cam-error-btn.ghost:hover{border-color:var(--ink);background:rgba(42,35,31,.04);color:var(--ink);}
+
 /* ============================================================
    ② 报告弹窗（生成中 + 完成态）
    ============================================================ */
@@ -580,20 +610,27 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 .shop-grid{
   flex:1;overflow-y:auto;padding:6px 24px 16px;
-  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  grid-auto-rows:max-content;align-content:start;
   -ms-overflow-style:none;scrollbar-width:none;
 }
 .shop-grid::-webkit-scrollbar{display:none;}
 .garment-card{
   background:var(--cream);border-radius:var(--r-md);overflow:hidden;cursor:pointer;
   transition:all .35s var(--ease);position:relative;border:1px solid transparent;
+  display:flex;flex-direction:column;
 }
 .garment-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px var(--shadow);}
 .garment-card.picked{border-color:var(--terra);box-shadow:0 0 0 1px var(--terra);}
 .garment-card.disabled{opacity:.4;pointer-events:none;}
 .garment-img{
-  aspect-ratio:3/4;background:linear-gradient(160deg,#E8DDD0,#DCCBBA);
-  position:relative;overflow:hidden;
+  width:100%;aspect-ratio:3/4;
+  background:linear-gradient(160deg,#E8DDD0,#DCCBBA);
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.garment-img > img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
 }
 .garment-img::after{
   content:"";position:absolute;inset:0;
@@ -603,8 +640,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   position:absolute;top:10px;left:10px;width:14px;height:14px;border-radius:50%;
   border:1px solid rgba(255,255,255,.6);
 }
-.garment-info{padding:10px 12px;}
-.garment-title{font-size:11.5px;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:4px;line-height:1.4;}
+.garment-info{padding:14px 14px 16px;}
+.garment-title{
+  font-size:12.5px;font-weight:500;color:var(--ink);letter-spacing:.04em;
+  margin-bottom:6px;line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 .garment-tag{font-family:var(--f-deco);font-size:10px;letter-spacing:.14em;color:var(--bronze);text-transform:uppercase;}
 .garment-check{
   position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;
