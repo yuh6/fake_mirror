@@ -223,8 +223,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 /* ---------- 摄像头相关（v5 新增） ---------- */
 .mirror-video{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;transform:scaleX(-1);
+  position:absolute;top:50%;left:50%;
+  /* 容器为 3:4 竖版；video 顺时针旋转 90° 后要铺满容器，
+     所以旋转前 width=容器高(133.333%)，height=容器宽(75%) */
+  width:133.333%;height:75%;
+  object-fit:cover;
+  transform:translate(-50%,-50%) rotate(90deg) scaleX(-1);
   opacity:0;transition:opacity .6s var(--ease);
   z-index:1;
 }
@@ -702,14 +706,20 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   background:linear-gradient(165deg,#EFE3D2,#D9C7B2);
   box-shadow:0 30px 60px var(--shadow);
 }
+.result-figure.has-img{background:#1a1612;}
+.result-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;
+  display:block;
+}
 .result-figure::after{
-  content:"";position:absolute;inset:0;
+  content:"";position:absolute;inset:0;z-index:1;
   background:linear-gradient(180deg,transparent 55%,rgba(42,35,31,.18));
 }
 .result-figure-glow{
-  position:absolute;inset:0;
+  position:absolute;inset:0;z-index:2;pointer-events:none;
   background:radial-gradient(50% 40% at 50% 35%,rgba(255,255,255,.4),transparent 70%);
 }
+.result-figure.has-img .result-figure-glow{opacity:.35;}
 .result-meta{text-align:center;margin-top:22px;}
 .result-card-tag{
   font-family:var(--f-deco);font-style:italic;font-size:11px;letter-spacing:.3em;
