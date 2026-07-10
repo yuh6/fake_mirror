@@ -1,0 +1,14 @@
+{
+  "name": "prototype-v5",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI·衣境 — 门店智能镜面终端 · v5（前端 + Express mock 后端）",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

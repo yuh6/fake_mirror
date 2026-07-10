@@ -1,0 +1,5 @@
+[
+  { "id": "adv1", "title": "知性通勤",   "style": "简约 · 大地色",  "clothes": "advisor/1.jpg" },
+  { "id": "adv2", "title": "商务干练",   "style": "中性 · 沉稳",    "clothes": "advisor/2.jpg" },
+  { "id": "adv3", "title": "松弛日常",   "style": "温润 · 生活感",  "clothes": "advisor/3.jpg" }
+]

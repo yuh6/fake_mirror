@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI·衣境 — 专属门店审美的AI造型顾问</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 竖屏落地镜终端容器 9:16 -->
+<div class="device" id="device">
+  <div class="device-frame">
+    <div class="screen" id="screen">
+
+      <!-- 顶部品牌恒显层 -->
+      <header class="brand-bar" id="brandBar">
+        <div class="brand-mark">
+          <span class="brand-cn">AI·衣境</span>
+          <span class="brand-en">AI STYLING ATELIER</span>
+        </div>
+        <div class="brand-meta" id="brandMeta"></div>
+      </header>
+
+      <!-- ① 形象报告分析页 -->
+      <section class="page page-capture is-active" id="page-capture" data-page="capture">
+        <div class="capture-stage">
+          <div class="mirror-view" id="mirrorView">
+            <!-- 摄像头预览（点击"开启分析"后启用） -->
+            <video class="mirror-video" id="mirrorVideo" autoplay playsinline muted></video>
+            <canvas class="mirror-canvas" id="mirrorCanvas"></canvas>
+            <div class="shutter-flash" id="shutterFlash"></div>
+            <!-- 装饰层：无摄像头时显示 -->
+            <div class="mirror-glow"></div>
+            <div class="mirror-silhouette"></div>
+            <div class="scan-line"></div>
+            <div class="mirror-grid"></div>
+            <!-- 摄像头开启后的取景框 -->
+            <div class="cam-reticle" aria-hidden="true">
+              <i class="cr cr-tl"></i><i class="cr cr-tr"></i>
+              <i class="cr cr-bl"></i><i class="cr cr-br"></i>
+            </div>
+          </div>
+          <div class="capture-hint" id="captureHint">
+            <p class="hint-eyebrow">STEP 01</p>
+            <h1 class="hint-title">站到镜前，<br>让我认识一下您</h1>
+            <p class="hint-sub">系统将在您就位后，自动开始专属形象分析</p>
+          </div>
+          <div class="cam-hint" id="camHint">
+            <p class="hint-eyebrow">CAMERA READY</p>
+            <p class="cam-hint-sub">请将面部与身形置于取景框内，准备好后点击拍照</p>
+          </div>
+          <button class="capture-btn" id="captureBtn">
+            <span class="cb-frame">
+              <i class="cb-corner cb-c-tl"></i><i class="cb-corner cb-c-tr"></i>
+              <i class="cb-corner cb-c-bl"></i><i class="cb-corner cb-c-br"></i>
+            </span>
+            <span class="cb-inner">
+              <span class="cb-en">BEGIN · ANALYSIS</span>
+              <span class="cb-label">开启专属形象分析</span>
+            </span>
+            <span class="cb-arrow"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </button>
+          <!-- 快门按钮（相机开启后显示） -->
+          <div class="shutter-row" id="shutterRow">
+            <button class="shutter-btn" id="shutterBtn" aria-label="拍照">
+              <span class="shutter-ring"></span>
+              <span class="shutter-core"></span>
+            </button>
+            <button class="cam-cancel" id="camCancel">取消</button>
+          </div>
+          <div class="capture-deco capture-deco-tl"></div>
+          <div class="capture-deco capture-deco-br"></div>
+        </div>
+      </section>
+
+      <!-- ② 报告结果弹窗（生成中 + 完成态）-->
+      <div class="report-layer" id="reportLayer">
+        <!-- 状态一：生成中 -->
+        <div class="report-loading" id="reportLoading">
+          <div class="loading-orb">
+            <div class="orb-halo"></div>
+            <svg class="orb-rings" viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="ring r1" cx="100" cy="100" r="92"/>
+              <circle class="ring r2 dash" cx="100" cy="100" r="76"/>
+              <circle class="ring r3" cx="100" cy="100" r="58"/>
+              <circle class="ring r4 dash" cx="100" cy="100" r="40"/>
+              <circle class="ring r5" cx="100" cy="100" r="24"/>
+              <g class="orb-particles" id="orbParticles"></g>
+            </svg>
+            <div class="orb-core-glow"></div>
+            <div class="orb-core"></div>
+          </div>
+          <p class="loading-label" id="loadingLabel">正在分析您的人脸…</p>
+          <div class="loading-progress"><span id="loadingBar"></span><i class="loading-shine"></i></div>
+          <p class="loading-pct" id="loadingPct">0%</p>
+        </div>
+
+        <!-- 状态二：完成态弹窗 -->
+        <div class="report-modal" id="reportModal">
+          <div class="modal-card">
+            <div class="modal-head">
+              <p class="modal-eyebrow">IMAGE REPORT</p>
+              <h2 class="modal-title">您的形象报告</h2>
+              <button class="modal-close" id="reportClose" aria-label="关闭">
+                <svg viewBox="0 0 24 24" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <div class="modal-body" id="reportBody">
+              <div class="report-seg">
+                <span class="seg-no">01</span>
+                <div class="seg-text">五官轮廓舒展，眉眼间距从容，整体气韵大方得体，是非常上相的面部比例。</div>
+              </div>
+              <div class="report-seg">
+                <span class="seg-no">02</span>
+                <div class="seg-text">身形匀称，肩颈线条流畅，自带一种松弛的挺拔感，承衣能力出众。</div>
+              </div>
+              <div class="report-seg">
+                <span class="seg-no">03</span>
+                <div class="seg-text">整体精神面貌温润而有力量，气质里带着不张扬的自信，很耐看。</div>
+              </div>
+              <div class="report-seg seg-guide">
+                <span class="seg-no">04</span>
+                <div class="seg-text">接下来，我将基于这份气质为您呈献专属造型方案——您可以选择让我来推荐，或自由探索。</div>
+              </div>
+            </div>
+            <button class="modal-action" id="reportOk">定制我的专属穿搭</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 功能选择页（斜分法）-->
+      <section class="page page-select" id="page-select" data-page="select">
+        <div class="select-intro">
+          <p class="intro-eyebrow">STEP 02 · 选择体验方式</p>
+          <h2 class="intro-title">您希望，<br>由谁来为您造型</h2>
+        </div>
+        <div class="select-split">
+          <div class="split-shape split-a" data-go="advisor">
+            <div class="split-inner">
+              <p class="split-tag">A · ADVISOR</p>
+              <h3 class="split-title">智能穿搭顾问</h3>
+              <p class="split-desc">由我根据您的形象与偏好，<br>为您推荐专属造型方案</p>
+              <span class="split-go">进入 →</span>
+            </div>
+          </div>
+          <div class="split-shape split-b" data-go="shop">
+            <div class="split-inner">
+              <p class="split-tag">B · ATELIER</p>
+              <h3 class="split-title">自由穿搭设计</h3>
+              <p class="split-desc">自主浏览选衣，<br>搭配属于你的造型</p>
+              <span class="split-go">进入 →</span>
+            </div>
+          </div>
+          <div class="split-divider"></div>
+        </div>
+      </section>
+
+      <!-- ④ 智能穿搭顾问界面 -->
+      <section class="page page-advisor" id="page-advisor" data-page="advisor">
+        <div class="advisor-visual">
+          <!-- 抽象动态视觉：音波 + 粒子 + 光线呼吸 -->
+          <svg class="advisor-canvas" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <defs>
+              <radialGradient id="auraGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#B86A55" stop-opacity="0.22"/>
+                <stop offset="60%" stop-color="#B86A55" stop-opacity="0.05"/>
+                <stop offset="100%" stop-color="#B86A55" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#9A7B52" stop-opacity="0"/>
+                <stop offset="50%" stop-color="#B86A55" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#9A7B52" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <circle class="aura" cx="300" cy="300" r="240" fill="url(#auraGrad)"/>
+            <!-- 音波条 -->
+            <g class="wave-bars" id="waveBars"></g>
+            <!-- 同心圆细线 -->
+            <circle class="orbit o1" cx="300" cy="300" r="120"/>
+            <circle class="orbit o2" cx="300" cy="300" r="170"/>
+            <circle class="orbit o3" cx="300" cy="300" r="220"/>
+            <!-- 漂浮粒子 -->
+            <g class="particles" id="particles"></g>
+            <!-- 中心呼吸点 -->
+            <circle class="core-pulse" cx="300" cy="300" r="5"/>
+          </svg>
+          <div class="advisor-greeting" id="advisorGreeting">
+            <p class="greeting-eyebrow">YOUR STYLIST</p>
+            <p class="greeting-text">你好，我是本店的穿搭顾问。<br>几个问题，让我更懂您。</p>
+          </div>
+        </div>
+
+        <!-- ⑤ 偏好问题环节（顾问页面下半区，按轮次切换）-->
+        <div class="advisor-qna" id="advisorQna">
+          <div class="qna-progress">
+            <span class="qna-step" id="qnaStep">01 / 03</span>
+            <div class="qna-dots"><i class="dot is-on"></i><i class="dot"></i><i class="dot"></i></div>
+          </div>
+          <h3 class="qna-question" id="qnaQuestion">您今天，主要是什么场合？</h3>
+          <div class="qna-options" id="qnaOptions">
+            <!-- JS 动态填充 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ⑥ 确认选择页 -->
+      <section class="page page-confirm" id="page-confirm" data-page="confirm">
+        <div class="confirm-wrap">
+          <p class="confirm-eyebrow">STEP · 确认偏好</p>
+          <h2 class="confirm-title">为您确认一下</h2>
+          <div class="confirm-summary" id="confirmSummary">
+            <!-- JS 填充 -->
+          </div>
+          <p class="confirm-guide">基于您之前的形象报告，加上您刚才选择的偏好，接下来我将为您生成符合您气质的专属穿搭方案。</p>
+          <div class="confirm-actions">
+            <button class="btn-ghost" id="confirmBack">没想好</button>
+            <button class="btn-solid" id="confirmGo">确认选择</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⑧ 选品页面 -->
+      <section class="page page-shop" id="page-shop" data-page="shop">
+        <div class="shop-top">
+          <div class="shop-title-row">
+            <h2 class="shop-title">自由穿搭设计</h2>
+            <span class="shop-count" id="shopCount">已选 0 / 3</span>
+          </div>
+          <div class="shop-filters" id="shopFilters">
+            <div class="filter-group">
+              <span class="filter-label">风格</span>
+              <div class="filter-chips" data-filter="style">
+                <button class="chip is-on" data-val="all">全部</button>
+                <button class="chip" data-val="简约">简约</button>
+                <button class="chip" data-val="优雅">优雅</button>
+                <button class="chip" data-val="休闲">休闲</button>
+                <button class="chip" data-val="复古">复古</button>
+                <button class="chip" data-val="前卫">前卫</button>
+              </div>
+            </div>
+          </div>
+          <div class="shop-suggest">
+            <span class="suggest-dot"></span>
+            <p class="suggest-text">基于您的形象：温润气质适合柔和大地色与流畅剪裁，仅作建议，您可自由选择。</p>
+          </div>
+        </div>
+        <div class="shop-grid" id="shopGrid">
+          <!-- JS 动态填充服装卡片 -->
+        </div>
+        <div class="shop-bar" id="shopBar">
+          <div class="shop-bar-picked" id="shopPicked">
+            <span class="picked-empty">选定区 · 最多 3 件</span>
+          </div>
+          <button class="btn-solid shop-confirm" id="shopConfirm" disabled>确认穿搭方案</button>
+        </div>
+      </section>
+
+      <!-- ⑨ 确认穿搭方案（独立轻量页）-->
+      <section class="page page-shopconfirm" id="page-shopconfirm" data-page="shopconfirm">
+        <div class="sc-wrap">
+          <p class="sc-eyebrow">STEP · 确认穿搭</p>
+          <h2 class="sc-title">您的选择</h2>
+          <div class="sc-list" id="scList"></div>
+          <div class="sc-actions">
+            <button class="btn-ghost" id="scBack">返回选品</button>
+            <button class="btn-solid" id="scGo">生成专属穿搭</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ⑦ 生成穿搭界面（共用）-->
+      <section class="page page-generate" id="page-generate" data-page="generate">
+        <div class="gen-stage">
+          <div class="gen-orb">
+            <svg class="gen-rings" viewBox="0 0 220 220" aria-hidden="true">
+              <circle class="gr gr1" cx="110" cy="110" r="100"/>
+              <circle class="gr gr2" cx="110" cy="110" r="76"/>
+              <circle class="gr gr3" cx="110" cy="110" r="52"/>
+            </svg>
+            <div class="gen-pct" id="genPct">0%</div>
+          </div>
+          <div class="gen-progress"><span id="genBar"></span></div>
+          <p class="gen-label" id="genLabel">正在根据您的气质，为您专属努力中…</p>
+          <p class="gen-sub">无需操作，请稍候</p>
+        </div>
+      </section>
+
+      <!-- ⑩ 生成结果页（共用）-->
+      <section class="page page-result" id="page-result" data-page="result">
+        <button class="result-home" id="resultHome" aria-label="退回首页">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M14 6l-6 6 6 6" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>退回首页</span>
+        </button>
+        <div class="result-stage" id="resultStage">
+          <div class="result-cards" id="resultCards">
+            <!-- JS 动态填充 3 套方案卡片 -->
+          </div>
+        </div>
+        <div class="result-indicator" id="resultIndicator"></div>
+        <div class="result-actions">
+          <button class="btn-soft" id="resultSave">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            电子版保存
+          </button>
+          <p class="result-countdown" id="resultCountdown"></p>
+        </div>
+      </section>
+
+      <!-- 二维码弹窗 -->
+      <div class="qr-modal" id="qrModal">
+        <div class="qr-card">
+          <p class="qr-eyebrow">SAVE TO ALBUM</p>
+          <h3 class="qr-title">扫码保存您的造型</h3>
+          <div class="qr-figure">
+            <svg viewBox="0 0 0 0" class="qr-svg" id="qrSvg"></svg>
+            <div class="qr-frame"></div>
+          </div>
+          <p class="qr-tip">手机扫码后，可将本次造型效果图保存至电子相册</p>
+          <button class="btn-soft qr-close" id="qrClose">关闭</button>
+        </div>
+      </div>
+
+      <!-- 全局反扫提示浮层 -->
+      <div class="scan-toast" id="scanToast">
+        <span class="scan-dot"></span>
+        <span class="scan-text">已识别实物 · 已加入选定区</span>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
