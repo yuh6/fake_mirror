@@ -110,16 +110,58 @@ app.post('/api/scan', async (req, res) => {
 });
 
 /* ---------- ⑦ 生成穿搭方案 ---------- */
-// 通用兜底：返 v4 硬编码 3 套（用于自由搭配 / 无图像场景）。
-app.post('/api/outfit/generate', (req, res) => {
-  const { sessionId } = req.body || {};
-  const outfits = [
-    { id: 'o1', title: '秋日呢子大衣',   style: '韩式 · 莫兰迪',  color1: '#E7D4C5', color2: '#C9A88A' },
-    { id: 'o2', title: '丝缎晚装套装',   style: '优雅 · 暮光玫瑰', color1: '#E8CFC4', color2: '#B86A55' },
-    { id: 'o3', title: '廓形针织造型',   style: '简约 · 暖陶土',  color1: '#D9C7B2', color2: '#9A7B52' },
-  ];
+// 有 pickedIds → 对每件选中的商品 × 人像并行跑 Seedream；否则退回 v4 硬编码 3 套。
+app.post('/api/outfit/generate', async (req, res) => {
+  const { sessionId, pickedIds, personImage: bodyPerson, personFile } = req.body || {};
+
+  if (!Array.isArray(pickedIds) || !pickedIds.length) {
+    const outfits = [
+      { id: 'o1', title: '秋日呢子大衣',   style: '韩式 · 莫兰迪',  color1: '#E7D4C5', color2: '#C9A88A' },
+      { id: 'o2', title: '丝缎晚装套装',   style: '优雅 · 暮光玫瑰', color1: '#E8CFC4', color2: '#B86A55' },
+      { id: 'o3', title: '廓形针织造型',   style: '简约 · 暖陶土',  color1: '#D9C7B2', color2: '#9A7B52' },
+    ];
+    if (sessions.has(sessionId)) sessions.get(sessionId).outfits = outfits;
+    setTimeout(() => res.json({ outfits }), 500);
+    return;
+  }
+
+  let allGarments = [];
+  try {
+    allGarments = JSON.parse(await readFile(join(ROOT, 'data', 'garments.json'), 'utf8'));
+  } catch (err) {
+    return res.status(500).json({ error: 'garments manifest missing: ' + err.message });
+  }
+  const picked = pickedIds.map(id => allGarments.find(g => g.id === id)).filter(Boolean);
+  if (!picked.length) return res.status(400).json({ error: 'no valid pickedIds' });
+
+  const { personImage, personSource } = await resolvePersonImage({ bodyPerson, personFile });
+  if (!personImage) {
+    return res.status(400).json({ error: 'no person image (upload one to data/people/ or send personImage in body)' });
+  }
+
+  const t0 = Date.now();
+  const outfits = await Promise.all(picked.map(async (g) => {
+    const clothesPath = garmentClothesPath(g);
+    const clothesImage = await readImageAsDataUrl(clothesPath).catch(() => null);
+    if (!clothesImage) console.warn(`[outfit] missing clothes file: ${clothesPath}`);
+    const r = await tryon({
+      clothesImage, personImage,
+      prompt: TRYON_PROMPT,
+      generatedDir: GEN_DIR,
+    }).catch(err => ({ imageUrl: null, error: err.message }));
+    return {
+      id: g.id,
+      title: g.title,
+      style: g.style,
+      imageUrl: r.imageUrl,
+      mock: r.mock,
+      error: r.error || null,
+    };
+  }));
   if (sessions.has(sessionId)) sessions.get(sessionId).outfits = outfits;
-  setTimeout(() => res.json({ outfits }), 500);
+  const dt = ((Date.now() - t0) / 1000).toFixed(1);
+  console.log(`[outfit] session=${sessionId?.slice(0, 8) || 'n/a'} person=${personSource} generated=${outfits.filter(o => o.imageUrl).length}/${outfits.length} took=${dt}s`);
+  res.json({ outfits, prompt: TRYON_PROMPT, personSource });
 });
 
 /* ---------- 图像合成（虚拟试穿）单张 ---------- */
@@ -153,18 +195,7 @@ app.post('/api/advisor/generate', async (req, res) => {
     return res.status(500).json({ error: 'advisor manifest missing: ' + err.message });
   }
 
-  // 决定人像来源
-  let personImage = bodyPerson || null;
-  let personSource = bodyPerson ? 'body' : null;
-  if (!personImage) {
-    const chosen = personFile
-      ? personFile
-      : (await pickFirstPersonFile().catch(() => null));
-    if (chosen) {
-      personImage = await readImageAsDataUrl(join(ROOT, 'data', 'people', chosen)).catch(() => null);
-      personSource = chosen;
-    }
-  }
+  const { personImage, personSource } = await resolvePersonImage({ bodyPerson, personFile });
   if (!personImage) {
     return res.status(400).json({ error: 'no person image (upload one to data/people/ or send personImage in body)' });
   }
@@ -185,6 +216,27 @@ app.post('/api/advisor/generate', async (req, res) => {
   console.log(`[advisor] session=${sessionId?.slice(0, 8) || 'n/a'} person=${personSource} generated=${outfits.filter(o => o.imageUrl).length}/${outfits.length} took=${dt}s`);
   res.json({ outfits, prompt: TRYON_PROMPT, personSource });
 });
+
+async function resolvePersonImage({ bodyPerson, personFile }) {
+  let personImage = bodyPerson || null;
+  let personSource = bodyPerson ? 'body' : null;
+  if (!personImage) {
+    const chosen = personFile
+      ? personFile
+      : (await pickFirstPersonFile().catch(() => null));
+    if (chosen) {
+      personImage = await readImageAsDataUrl(join(ROOT, 'data', 'people', chosen)).catch(() => null);
+      personSource = chosen;
+    }
+  }
+  return { personImage, personSource };
+}
+
+// garment.image 形如 "/looks/advisor/1.jpg"（可能 URL 编码），映射到 data/looks/<rel>
+function garmentClothesPath(g) {
+  const rel = decodeURIComponent(String(g.image || '').replace(/^\/looks\//, ''));
+  return join(ROOT, 'data', 'looks', rel);
+}
 
 async function pickFirstPersonFile() {
   const { readdir } = await import('node:fs/promises');
