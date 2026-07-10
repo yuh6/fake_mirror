@@ -12,7 +12,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-export const TRYON_PROMPT = '将图一的服饰，穿到图二的人物身上，保持图二背景内容与人物面貌一致性不变。';
+export const TRYON_PROMPT = '将图一的服饰，穿到图二的人物身上，保持图二背景内容与人物面貌一致性不变。换装完成后，对人物的神态与姿态进行轻微调整，让其显得更自信从容（眼神稍坚定、嘴角略微上扬、姿态更挺拔），但幅度要小，不要改变面部特征、身份识别度、体型比例或背景。'
 
 const ARK_API_BASE = process.env.ARK_API_BASE || 'https://ark.cn-beijing.volces.com/api/v3';
 const ARK_MODEL = process.env.ARK_MODEL || 'doubao-seedream-5-0-pro-260628';
