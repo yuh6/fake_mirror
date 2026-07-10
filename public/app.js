@@ -677,9 +677,9 @@
       onUpdate: paint,
     });
 
-    // 分支决定后端端点：advisor → 真图（把拍到的人像传上去）；其他 → 兜底
+    // 分支决定后端端点：advisor → 真图（Demo：始终用 data/people/ 里的固定人像，忽略拍到的图）
     const backendReady = (state.branch === 'advisor'
-      ? API.advisorGenerate(state.sessionId, state.capturedImage)
+      ? API.advisorGenerate(state.sessionId)
       : API.outfitGenerate(state.sessionId, {
           answers: state.answers,
           pickedIds: state.picked.map(p => p.id),
