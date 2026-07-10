@@ -16,6 +16,9 @@
   <div class="device-frame">
     <div class="screen" id="screen">
 
+      <!-- Skiper84 网格渐变背景（WebGL 着色器） -->
+      <div class="mesh-bg" id="meshBg" aria-hidden="true"></div>
+
       <!-- 顶部品牌恒显层 -->
       <header class="brand-bar" id="brandBar">
         <div class="brand-mark">
@@ -345,6 +348,25 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script type="module">
+  import React from "https://esm.sh/react@18";
+  import { createRoot } from "https://esm.sh/react-dom@18/client";
+  import { MeshGradient } from "https://esm.sh/@paper-design/shaders-react@0.0.77?deps=react@18,react-dom@18";
+  const el = document.getElementById('meshBg');
+  if (el) {
+    createRoot(el).render(
+      React.createElement(MeshGradient, {
+        speed: 1,
+        colors: ["#C1DAFE", "#96BEFF", "#CFB7FC", "#EBE1F9"],
+        distortion: 0.8,
+        swirl: 1,
+        grainMixer: 0,
+        grainOverlay: 0,
+        style: { height: "100%", width: "100%", position: "absolute", inset: 0 }
+      })
+    );
+  }
+</script>
 <script src="app.js"></script>
 </body>
 </html>

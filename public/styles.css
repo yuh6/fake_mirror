@@ -14,10 +14,14 @@
   --ink-3:#A89C92;         /* 浅辅助文字 */
   --line:#E2D8CC;          /* 暖灰白·细线 */
   --line-2:#D3C6B6;        /* 略深细线 */
-  --terra:#B86A55;         /* 陶土玫瑰·主强调 */
-  --terra-deep:#9F5443;    /* 深陶土·按下 */
-  --terra-soft:#E8CFC4;    /* 雾玫瑰·柔光面 */
-  --bronze:#9A7B52;        /* 古铜·点缀 */
+  --terra:#6E5BE6;         /* 冷紫玫瑰·主强调（原陶土 #B86A55，切冷调后语义不变） */
+  --terra-deep:#4C3ECB;    /* 深冷紫·按下（原 #9F5443） */
+  --terra-soft:#DCC7FA;    /* 雾薰衣草·柔光面（原 #E8CFC4） */
+  --bronze:#7B6FCF;        /* 雾靛蓝·点缀 eyebrow 用（原古铜 #9A7B52） */
+  --accent:#6E5BE6;        /* 冷紫强调（适配 skiper84 底） */
+  --accent-deep:#4C3ECB;   /* 按下 */
+  --glass:rgba(255,255,255,0.55);       /* 玻璃底 */
+  --glass-line:rgba(255,255,255,0.7);   /* 玻璃描边 */
   --shadow:rgba(42,35,31,.10);
   --shadow-soft:rgba(42,35,31,.05);
 
@@ -60,7 +64,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .screen{
   position:relative;width:100%;height:100%;
-  background:var(--bg);overflow:hidden;isolation:isolate;
+  background:transparent;overflow:hidden;isolation:isolate;
+}
+/* Skiper84 网格渐变底层（WebGL 着色器容器，所有页面共用） */
+.mesh-bg{
+  position:absolute;inset:0;z-index:0;pointer-events:none;
+}
+.mesh-bg > *{
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
 }
 
 /* ============== 品牌恒显栏 ============== */
@@ -102,33 +113,35 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* ============== 按钮 ============== */
 .btn-solid{
   background:var(--ink);color:var(--cream);
-  padding:16px 30px;border-radius:var(--r-sm);
-  font-family:var(--f-body);font-weight:400;font-size:14px;
+  padding:12px 22px;border-radius:var(--r-sm);
+  font-family:var(--f-body);font-weight:400;font-size:12.5px;
   letter-spacing:.08em;transition:all .35s var(--ease);
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.btn-solid:hover{background:var(--terra);transform:translateY(-1px);box-shadow:0 10px 30px rgba(184,106,85,.3);}
-.btn-solid:active{transform:translateY(0);}
-.btn-solid:disabled{background:var(--line-2);color:var(--ink-3);cursor:not-allowed;box-shadow:none;transform:none;}
+.btn-solid:hover{background:var(--accent);transform:translateY(-1px);box-shadow:0 10px 26px rgba(110,91,230,.35);}
+.btn-solid:active{background:var(--accent-deep);transform:translateY(0);}
+.btn-solid:disabled{background:rgba(42,35,31,.35);color:rgba(255,255,255,.6);cursor:not-allowed;box-shadow:none;transform:none;}
 
 .btn-ghost{
-  background:transparent;color:var(--ink);
-  padding:16px 30px;border-radius:var(--r-sm);
-  font-family:var(--f-body);font-weight:400;font-size:14px;
-  letter-spacing:.08em;border:1px solid var(--line-2);
+  background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:var(--ink);
+  padding:12px 22px;border-radius:var(--r-sm);
+  font-family:var(--f-body);font-weight:400;font-size:12.5px;
+  letter-spacing:.08em;border:1px solid var(--glass-line);
   transition:all .35s var(--ease);
 }
-.btn-ghost:hover{border-color:var(--ink);background:rgba(42,35,31,.03);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,255,255,0.72);}
 
 .btn-soft{
-  background:var(--cream);color:var(--ink);
-  padding:14px 26px;border-radius:var(--r-sm);
-  font-size:13px;letter-spacing:.06em;
-  border:1px solid var(--line);
+  background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  color:var(--ink);
+  padding:10px 20px;border-radius:var(--r-sm);
+  font-size:12px;letter-spacing:.06em;
+  border:1px solid var(--glass-line);
   transition:all .35s var(--ease);
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.btn-soft:hover{border-color:var(--terra);color:var(--terra);}
+.btn-soft:hover{border-color:var(--accent);color:var(--accent);}
 
 .eyebrow{
   font-family:var(--f-deco);font-style:italic;font-weight:400;
@@ -146,7 +159,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .mirror-view{
   position:relative;width:78%;aspect-ratio:3/4;border-radius:50% 50% 48% 48% / 42% 42% 44% 44%;
-  background:linear-gradient(160deg,#EFE6DA 0%, #E5D9CB 60%, #DCCDBD 100%);
+  background:linear-gradient(160deg,#ECE4FA 0%, #D9D0F1 60%, #C7BCE8 100%);
   overflow:hidden;
   box-shadow:inset 0 2px 10px rgba(255,255,255,.6), inset 0 -20px 40px rgba(42,35,31,.08), 0 30px 60px var(--shadow);
   margin-bottom:36px;
@@ -170,7 +183,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .scan-line{
   position:absolute;left:0;right:0;height:2px;top:0;
   background:linear-gradient(90deg, transparent, var(--terra) 50%, transparent);
-  box-shadow:0 0 14px rgba(184,106,85,.7);
+  box-shadow:0 0 14px rgba(110,91,230,.7);
   opacity:0;
 }
 .capture-hint{text-align:center;margin-bottom:30px;}
@@ -342,7 +355,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .loading-orb{position:relative;width:150px;height:150px;margin-bottom:34px;}
 .orb-halo{
   position:absolute;inset:-18px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle, rgba(184,106,85,.16), transparent 70%);
+  background:radial-gradient(circle, rgba(110,91,230,.16), transparent 70%);
   filter:blur(2px);
 }
 .orb-rings{width:100%;height:100%;position:relative;z-index:2;}
@@ -357,13 +370,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .orb-core{
   position:absolute;top:50%;left:50%;width:16px;height:16px;
   margin:-8px 0 0 -8px;border-radius:50%;z-index:3;
-  background:radial-gradient(circle, #d98a76 0%, var(--terra) 60%, var(--terra-deep) 100%);
-  box-shadow:0 0 18px rgba(184,106,85,.7);
+  background:radial-gradient(circle, #a89bf3 0%, var(--terra) 60%, var(--terra-deep) 100%);
+  box-shadow:0 0 18px rgba(110,91,230,.7);
 }
 .orb-core-glow{
   position:absolute;top:50%;left:50%;width:64px;height:64px;
   margin:-32px 0 0 -32px;border-radius:50%;z-index:1;pointer-events:none;
-  background:radial-gradient(circle, rgba(184,106,85,.32), transparent 70%);
+  background:radial-gradient(circle, rgba(110,91,230,.32), transparent 70%);
 }
 .loading-label{
   font-family:var(--f-display);font-weight:400;font-size:17px;
@@ -372,7 +385,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .loading-progress{
   position:relative;width:220px;height:2px;background:var(--line);border-radius:2px;overflow:hidden;
 }
-.loading-progress span{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg, var(--bronze), var(--terra));box-shadow:0 0 8px rgba(184,106,85,.5);}
+.loading-progress span{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg, var(--bronze), var(--terra));box-shadow:0 0 8px rgba(110,91,230,.5);}
 .loading-shine{
   position:absolute;top:0;left:0;width:40px;height:100%;pointer-events:none;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
@@ -743,7 +756,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .result-figure{
   width:80%;aspect-ratio:3/4;border-radius:var(--r-md);overflow:hidden;
   position:relative;
-  background:linear-gradient(165deg,#EFE3D2,#D9C7B2);
+  background:linear-gradient(165deg,#EBE1F9,#CFB7FC);
   box-shadow:0 30px 60px var(--shadow);
 }
 .result-figure.has-img{background:#1a1612;}
