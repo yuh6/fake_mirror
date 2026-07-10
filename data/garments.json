@@ -1,12 +1,9 @@
 [
-  { "id": "g1",  "title": "廓形羊毛大衣",   "style": "简约", "swatch": "#C9A88A", "tag": "MINIMAL",  "sizes": ["S","M","L"],      "stock": 3 },
-  { "id": "g2",  "title": "丝缎吊带裙",     "style": "优雅", "swatch": "#B86A55", "tag": "ELEGANT",  "sizes": ["XS","S","M"],     "stock": 2 },
-  { "id": "g3",  "title": "粗针织开衫",     "style": "休闲", "swatch": "#9A7B52", "tag": "CASUAL",   "sizes": ["M","L","XL"],     "stock": 5 },
-  { "id": "g4",  "title": "格纹西装外套",   "style": "复古", "swatch": "#7A5C42", "tag": "VINTAGE",  "sizes": ["S","M","L"],      "stock": 1 },
-  { "id": "g5",  "title": "不对称剪裁衬衫", "style": "前卫", "swatch": "#2A231F", "tag": "AVANT",    "sizes": ["S","M"],          "stock": 4 },
-  { "id": "g6",  "title": "高腰阔腿西裤",   "style": "简约", "swatch": "#6B5F56", "tag": "MINIMAL",  "sizes": ["S","M","L"],      "stock": 6 },
-  { "id": "g7",  "title": "针织收腰连衣裙", "style": "优雅", "swatch": "#BC6A55", "tag": "ELEGANT",  "sizes": ["XS","S","M","L"], "stock": 3 },
-  { "id": "g8",  "title": "皮革机车夹克",   "style": "前卫", "swatch": "#3a312a", "tag": "AVANT",    "sizes": ["M","L"],          "stock": 2 },
-  { "id": "g9",  "title": "棉麻系带衬衫裙", "style": "休闲", "swatch": "#D9C7B2", "tag": "CASUAL",   "sizes": ["S","M","L"],      "stock": 4 },
-  { "id": "g10", "title": "丝绒廓形西装",   "style": "复古", "swatch": "#5C4A3A", "tag": "VINTAGE",  "sizes": ["S","M","L"],      "stock": 1 }
+  { "id": "g1", "title": "条纹落肩T恤套装", "style": "休闲", "swatch": "#2A231F", "tag": "CASUAL",   "image": "/looks/advisor/01%20%E5%A5%97%E8%A3%85.jpg", "sizes": ["S","M","L"],      "stock": 3 },
+  { "id": "g2", "title": "宝蓝印花泡泡袖连衣裙", "style": "优雅", "swatch": "#1F3AA0", "tag": "ELEGANT",  "image": "/looks/advisor/02%20%E8%A3%99%E5%AD%90.jpg", "sizes": ["XS","S","M"],     "stock": 2 },
+  { "id": "g3", "title": "棕格纹蕾丝挂脖裙",   "style": "复古", "swatch": "#5C4A3A", "tag": "VINTAGE",  "image": "/looks/advisor/03%20%E8%A3%99%E5%AD%90.jpg", "sizes": ["S","M","L"],      "stock": 4 },
+  { "id": "g4", "title": "橄榄绿系带风衣",     "style": "简约", "swatch": "#8D8A6C", "tag": "MINIMAL",  "image": "/looks/advisor/05%20%E5%A4%A7%E8%A1%A3.jpg", "sizes": ["S","M","L"],      "stock": 2 },
+  { "id": "g5", "title": "水墨老花印花衬衫",   "style": "前卫", "swatch": "#5E7CB8", "tag": "AVANT",    "image": "/looks/advisor/1.jpg",                          "sizes": ["M","L"],          "stock": 3 },
+  { "id": "g6", "title": "字母印花黑T",         "style": "休闲", "swatch": "#0E0E10", "tag": "CASUAL",   "image": "/looks/advisor/2.webp",                         "sizes": ["S","M","L","XL"], "stock": 6 },
+  { "id": "g7", "title": "藏青老花渐变T恤",     "style": "前卫", "swatch": "#1B2F52", "tag": "AVANT",    "image": "/looks/advisor/3.jpg",                          "sizes": ["M","L","XL"],     "stock": 4 }
 ]

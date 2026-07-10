@@ -1,10 +1,11 @@
 /**
- * AI·衣境 v5 — Express mock 后端
- * 所有 AI/数据接口先返回 mock，与 v4 硬编码保持一致，便于前端逐步接入。
- * 后续每个 route 内部有 TODO 标注真实 provider 的接入点。
+ * AI·衣境 v5 — Express 后端
+ * 图像合成走火山引擎 Ark Seedream；未配 ARK_API_KEY 时走 mock。
+ * 部署：Railway（Nixpacks 自动识别 Node），PORT 由平台注入。
  */
 import express from 'express';
 import { readFile } from 'node:fs/promises';
+import { mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -14,13 +15,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const GEN_DIR = join(ROOT, 'data', 'generated');
 
+// Railway 是短暂磁盘，容器起来时 /generated 不存在会让 express.static 抛 ENOENT
+if (!existsSync(GEN_DIR)) mkdirSync(GEN_DIR, { recursive: true });
+
 const app = express();
 app.use(express.json({ limit: '20mb' }));
+
+/* ---------- 健康检查（Railway） ---------- */
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    time: new Date().toISOString(),
+    tryon: process.env.ARK_API_KEY ? 'seedream' : 'mock',
+  });
+});
 
 /* ---------- 静态前端 ---------- */
 app.use(express.static(join(ROOT, 'public')));
 /* ---------- 生成图静态服务 ---------- */
 app.use('/generated', express.static(GEN_DIR, { fallthrough: false }));
+/* ---------- 商品实物图静态服务（advisor 目录） ---------- */
+app.use('/looks', express.static(join(ROOT, 'data', 'looks')));
 
 /* ---------- 内存态（demo 用；生产接 Redis） ---------- */
 const sessions = new Map();
@@ -125,21 +140,39 @@ app.post('/api/tryon', async (req, res) => {
 });
 
 /* ---------- 顾问 3 套（固定） ---------- */
-// POST /api/advisor/generate  body: { sessionId, personImage }
-// 服务端读取 data/looks/advisor.json 的 3 套 metadata，取对应 clothes 图，逐一与 personImage 合成。
+// POST /api/advisor/generate  body: { sessionId, personImage?, personFile? }
+// 服务端读 data/looks/advisor.json 的 3 套 metadata，取对应 clothes 图；
+// 人像优先级：body.personImage > body.personFile(在 data/people/ 下) > data/people/ 首个文件
+// 每套 clothes × 人像 并行调 Seedream。
 app.post('/api/advisor/generate', async (req, res) => {
-  const { sessionId, personImage } = req.body || {};
+  const { sessionId, personImage: bodyPerson, personFile } = req.body || {};
   let looks = [];
   try {
     looks = JSON.parse(await readFile(join(ROOT, 'data', 'looks', 'advisor.json'), 'utf8'));
   } catch (err) {
     return res.status(500).json({ error: 'advisor manifest missing: ' + err.message });
   }
+
+  // 决定人像来源
+  let personImage = bodyPerson || null;
+  let personSource = bodyPerson ? 'body' : null;
+  if (!personImage) {
+    const chosen = personFile
+      ? personFile
+      : (await pickFirstPersonFile().catch(() => null));
+    if (chosen) {
+      personImage = await readImageAsDataUrl(join(ROOT, 'data', 'people', chosen)).catch(() => null);
+      personSource = chosen;
+    }
+  }
+  if (!personImage) {
+    return res.status(400).json({ error: 'no person image (upload one to data/people/ or send personImage in body)' });
+  }
+
+  const t0 = Date.now();
   const outfits = await Promise.all(looks.map(async (look) => {
     const clothesImage = await readImageAsDataUrl(join(ROOT, 'data', 'looks', look.clothes)).catch(() => null);
-    if (!clothesImage) {
-      console.warn(`[advisor] missing clothes file: ${look.clothes}`);
-    }
+    if (!clothesImage) console.warn(`[advisor] missing clothes file: ${look.clothes}`);
     const r = await tryon({
       clothesImage, personImage,
       prompt: TRYON_PROMPT,
@@ -148,9 +181,16 @@ app.post('/api/advisor/generate', async (req, res) => {
     return { ...look, imageUrl: r.imageUrl, mock: r.mock, error: r.error || null };
   }));
   if (sessions.has(sessionId)) sessions.get(sessionId).outfits = outfits;
-  console.log(`[advisor] session=${sessionId?.slice(0, 8) || 'n/a'} generated=${outfits.filter(o => o.imageUrl).length}/${outfits.length}`);
-  res.json({ outfits, prompt: TRYON_PROMPT });
+  const dt = ((Date.now() - t0) / 1000).toFixed(1);
+  console.log(`[advisor] session=${sessionId?.slice(0, 8) || 'n/a'} person=${personSource} generated=${outfits.filter(o => o.imageUrl).length}/${outfits.length} took=${dt}s`);
+  res.json({ outfits, prompt: TRYON_PROMPT, personSource });
 });
+
+async function pickFirstPersonFile() {
+  const { readdir } = await import('node:fs/promises');
+  const files = await readdir(join(ROOT, 'data', 'people'));
+  return files.find(f => /\.(jpe?g|png|webp)$/i.test(f)) || null;
+}
 
 async function readImageAsDataUrl(path) {
   const buf = await readFile(path);
@@ -182,5 +222,6 @@ h1{font-weight:400;font-size:22px;margin:0 0 8px}p{color:#6B5F56;font-size:14px}
 /* ---------- 启动 ---------- */
 const PORT = process.env.PORT || 5180;
 app.listen(PORT, () => {
-  console.log(`[v5] http://localhost:${PORT}`);
+  const mode = process.env.ARK_API_KEY ? 'REAL (Seedream 5.0 Pro)' : 'MOCK';
+  console.log(`[v5] listening on ${PORT}  tryon=${mode}`);
 });

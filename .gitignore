@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log*
+.env
+.env.local
+.env.*.local
+
+# 生成图缓存：Railway 是短暂磁盘，每次部署会被清空；
+# 不入库，也不必入库（真出图时再落盘）。
+data/generated/
+
+# 本地日志/临时
+*.log
+.DS_Store

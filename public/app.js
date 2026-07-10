@@ -47,6 +47,13 @@
       });
       return r.json();
     },
+    async advisorGenerate(sessionId, personImage) {
+      const r = await fetch('/api/advisor/generate', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, personImage: personImage || undefined }),
+      });
+      return r.json();
+    },
     async saveLook(sessionId, outfitIds) {
       const r = await fetch('/api/save-look', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -58,16 +65,13 @@
 
   /* ---------- 兜底数据（后端返回后被覆盖） ---------- */
   let GARMENTS = [
-    { id: 'g1', title: '廓形羊毛大衣', style: '简约', swatch: '#C9A88A', tag: 'MINIMAL' },
-    { id: 'g2', title: '丝缎吊带裙', style: '优雅', swatch: '#B86A55', tag: 'ELEGANT' },
-    { id: 'g3', title: '粗针织开衫', style: '休闲', swatch: '#9A7B52', tag: 'CASUAL' },
-    { id: 'g4', title: '格纹西装外套', style: '复古', swatch: '#7A5C42', tag: 'VINTAGE' },
-    { id: 'g5', title: '不对称剪裁衬衫', style: '前卫', swatch: '#2A231F', tag: 'AVANT' },
-    { id: 'g6', title: '高腰阔腿西裤', style: '简约', swatch: '#6B5F56', tag: 'MINIMAL' },
-    { id: 'g7', title: '针织收腰连衣裙', style: '优雅', swatch: '#BC6A55', tag: 'ELEGANT' },
-    { id: 'g8', title: '皮革机车夹克', style: '前卫', swatch: '#3a312a', tag: 'AVANT' },
-    { id: 'g9', title: '棉麻系带衬衫裙', style: '休闲', swatch: '#D9C7B2', tag: 'CASUAL' },
-    { id: 'g10', title: '丝绒廓形西装', style: '复古', swatch: '#5C4A3A', tag: 'VINTAGE' },
+    { id: 'g1', title: '条纹落肩T恤套装',     style: '休闲', swatch: '#2A231F', tag: 'CASUAL',  image: '/looks/advisor/01%20%E5%A5%97%E8%A3%85.jpg' },
+    { id: 'g2', title: '宝蓝印花泡泡袖连衣裙', style: '优雅', swatch: '#1F3AA0', tag: 'ELEGANT', image: '/looks/advisor/02%20%E8%A3%99%E5%AD%90.jpg' },
+    { id: 'g3', title: '棕格纹蕾丝挂脖裙',     style: '复古', swatch: '#5C4A3A', tag: 'VINTAGE', image: '/looks/advisor/03%20%E8%A3%99%E5%AD%90.jpg' },
+    { id: 'g4', title: '橄榄绿系带风衣',       style: '简约', swatch: '#8D8A6C', tag: 'MINIMAL', image: '/looks/advisor/05%20%E5%A4%A7%E8%A1%A3.jpg' },
+    { id: 'g5', title: '水墨老花印花衬衫',     style: '前卫', swatch: '#5E7CB8', tag: 'AVANT',   image: '/looks/advisor/1.jpg' },
+    { id: 'g6', title: '字母印花黑T',           style: '休闲', swatch: '#0E0E10', tag: 'CASUAL',  image: '/looks/advisor/2.webp' },
+    { id: 'g7', title: '藏青老花渐变T恤',       style: '前卫', swatch: '#1B2F52', tag: 'AVANT',   image: '/looks/advisor/3.jpg' },
   ];
 
   let QUESTIONS = [
@@ -89,6 +93,7 @@
   const state = {
     sessionId: null,
     page: 'page-capture',
+    branch: null,
     answers: {},
     qIdx: 0,
     picked: [],
@@ -98,6 +103,7 @@
     masterTl: null,
     reportSegments: null,
     shareUrl: null,
+    capturedImage: null,
   };
 
   /* ============================================================
@@ -180,9 +186,21 @@
     const video = $('#mirrorVideo');
     const view = $('#mirrorView');
     const scope = $('#page-capture');
+
+    // 每次尝试先清掉可能残留的错误态
+    view.classList.remove('has-error');
+
+    // 浏览器策略：getUserMedia 只在 HTTPS 或 localhost 下可用
+    const secure = window.isSecureContext ||
+      ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
+    if (!secure) {
+      return showCameraError(
+        '摄像头需要 HTTPS 或 localhost',
+        `当前地址：${location.protocol}//${location.host}`
+      );
+    }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      showToast('当前环境不支持摄像头，进入示例模式');
-      return startReport(null);
+      return showCameraError('当前浏览器不支持摄像头 API', navigator.userAgent);
     }
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -200,10 +218,25 @@
       gsap.fromTo('#camHint', { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: .5, delay: .15 });
       gsap.fromTo('#shutterRow', { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: .55, delay: .25 });
     } catch (err) {
-      console.warn('camera error', err);
-      showToast('无法访问摄像头，将使用示例模式');
-      startReport(null);
+      console.warn('[camera] getUserMedia error:', err.name, err.message, err);
+      const hint = {
+        NotAllowedError:   '摄像头权限被拒绝，请在地址栏左侧解锁摄像头权限后重试',
+        NotFoundError:     '没有检测到摄像头设备',
+        NotReadableError:  '摄像头被其他程序占用（腾讯会议 / OBS / Zoom 等），请关掉后重试',
+        OverconstrainedError: '摄像头不满足要求（分辨率或朝向）',
+        SecurityError:     '浏览器安全策略拒绝，需 HTTPS 或 localhost',
+        AbortError:        '摄像头启动被中断，请重试',
+      }[err.name] || '摄像头启动失败';
+      showCameraError(hint, `${err.name || 'CameraError'}: ${err.message}`);
     }
+  }
+
+  function showCameraError(msg, diag) {
+    const view = $('#mirrorView');
+    $('#camErrorMsg').textContent = msg;
+    $('#camErrorDiag').textContent = diag || '';
+    view.classList.remove('is-camera');
+    view.classList.add('has-error');
   }
 
   function stopCamera() {
@@ -228,6 +261,7 @@
     ctx.drawImage(video, 0, 0, w, h);
     ctx.restore();
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    state.capturedImage = dataUrl;
     // 快门闪一下
     const flash = $('#shutterFlash');
     gsap.set(flash, { autoAlpha: 0 });
@@ -366,6 +400,7 @@
   }
   $$('.split-shape').forEach(el => el.addEventListener('click', () => {
     const target = el.dataset.go;
+    state.branch = target;
     if (target === 'advisor') go('page-advisor');
     if (target === 'shop') go('page-shop');
   }));
@@ -508,6 +543,7 @@
       if (state.picked.length >= 3 && !state.picked.find(p => p.id === g.id)) card.classList.add('disabled');
       card.innerHTML = `
         <div class="garment-img">
+          ${g.image ? `<img src="${g.image}" alt="${g.title}" loading="lazy" />` : ''}
           <span class="garment-swatch" style="background:${g.swatch}"></span>
           <div class="garment-check"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         </div>
@@ -621,29 +657,43 @@
     const label = $('#genLabel');
     const prog = { v: 0 };
     gsap.fromTo('.gen-orb', { scale: .8, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: .8, ease: 'power3.out' });
-    // 环旋转
     gsap.to('.gr1', { rotation: 360, transformOrigin: '110px 110px', duration: 8, repeat: -1, ease: 'none' });
     gsap.to('.gr2', { rotation: -360, transformOrigin: '110px 110px', duration: 6, repeat: -1, ease: 'none' });
     gsap.to('.gr3', { rotation: 360, transformOrigin: '110px 110px', duration: 4, repeat: -1, ease: 'none' });
 
-    // 后端生成方案：把 answers + picked 传上去
-    const backendReady = API.outfitGenerate(state.sessionId, {
-      answers: state.answers,
-      pickedIds: state.picked.map(p => p.id),
-    }).then(r => { if (Array.isArray(r.outfits) && r.outfits.length) RESULTS = r.outfits; })
-      .catch(() => {});
+    const paint = () => {
+      const v = Math.round(prog.v);
+      bar.style.width = v + '%';
+      pct.textContent = v + '%';
+      label.textContent = GEN_MSGS[Math.min(GEN_MSGS.length - 1, Math.floor(v / 30))];
+    };
 
-    const tl = gsap.timeline();
-    tl.to(prog, {
-      v: 100, duration: 5, ease: 'power1.inOut',
-      onUpdate() {
-        const v = Math.round(prog.v);
-        bar.style.width = v + '%';
-        pct.textContent = v + '%';
-        label.textContent = GEN_MSGS[Math.min(GEN_MSGS.length - 1, Math.floor(v / 34))];
-      }
+    // 进度：慢速渐进到 85%（80s 兜底），backend 完成即立刻冲到 100%
+    const slowTween = gsap.to(prog, {
+      v: 85, duration: 80, ease: 'power1.out',
+      onUpdate: paint,
     });
-    tl.add(() => { backendReady.finally(() => go('page-result')); });
+
+    // 分支决定后端端点：advisor → 真图（把拍到的人像传上去）；其他 → 兜底
+    const backendReady = (state.branch === 'advisor'
+      ? API.advisorGenerate(state.sessionId, state.capturedImage)
+      : API.outfitGenerate(state.sessionId, {
+          answers: state.answers,
+          pickedIds: state.picked.map(p => p.id),
+        })
+    ).then(r => {
+      if (r && Array.isArray(r.outfits) && r.outfits.length) RESULTS = r.outfits;
+      return r;
+    }).catch(() => null);
+
+    backendReady.finally(() => {
+      slowTween.kill();
+      gsap.to(prog, {
+        v: 100, duration: .6, ease: 'power2.out',
+        onUpdate: paint,
+        onComplete() { go('page-result'); },
+      });
+    });
   }
 
   /* ============================================================
@@ -651,18 +701,20 @@
      ============================================================ */
   function renderResultCards() {
     const wrap = $('#resultCards');
-    wrap.innerHTML = RESULTS.map((r, i) => `
+    wrap.innerHTML = RESULTS.map((r, i) => {
+      const figure = r.imageUrl
+        ? `<div class="result-figure has-img"><img class="result-img" src="${r.imageUrl}" alt="${r.title || ''}" loading="lazy"><div class="result-figure-glow"></div></div>`
+        : `<div class="result-figure" style="background:linear-gradient(165deg, ${r.color1 || '#E7D4C5'}, ${r.color2 || '#C9A88A'})"><div class="result-figure-glow"></div></div>`;
+      return `
       <div class="result-card" data-i="${i}">
-        <div class="result-figure" style="background:linear-gradient(165deg, ${r.color1}, ${r.color2})">
-          <div class="result-figure-glow"></div>
-        </div>
+        ${figure}
         <div class="result-meta">
           <div class="result-card-tag">LOOK ${String(i + 1).padStart(2, '0')}</div>
-          <div class="result-card-title">${r.title}</div>
-          <div class="result-card-style">${r.style}</div>
+          <div class="result-card-title">${r.title || ''}</div>
+          <div class="result-card-style">${r.style || ''}</div>
         </div>
-      </div>`).join('');
-    // 指示器
+      </div>`;
+    }).join('');
     $('#resultIndicator').innerHTML = RESULTS.map((_, i) => `<span class="ind-dot${i === 0 ? ' is-on' : ''}"></span>`).join('');
   }
 
@@ -705,7 +757,8 @@
     if (state.countdownTimer) clearInterval(state.countdownTimer);
     // 重置状态
     state.answers = {}; state.qIdx = 0; state.picked = []; state.filterStyle = 'all';
-    state.reportSegments = null; state.shareUrl = null;
+    state.reportSegments = null; state.shareUrl = null; state.branch = null;
+    state.capturedImage = null;
     // 换新会话，保证每个 walk-in 客人独立
     API.createSession().then(s => { if (s && s.sessionId) state.sessionId = s.sessionId; }).catch(() => {});
     $$('.filter-chips[data-filter="style"] .chip').forEach((x, i) => x.classList.toggle('is-on', i === 0));

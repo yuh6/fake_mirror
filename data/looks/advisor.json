@@ -1,5 +1,5 @@
 [
-  { "id": "adv1", "title": "知性通勤",   "style": "简约 · 大地色",  "clothes": "advisor/1.jpg" },
-  { "id": "adv2", "title": "商务干练",   "style": "中性 · 沉稳",    "clothes": "advisor/2.jpg" },
-  { "id": "adv3", "title": "松弛日常",   "style": "温润 · 生活感",  "clothes": "advisor/3.jpg" }
+  { "id": "adv1", "title": "蓝调水墨衬衫",   "style": "度假通勤 · 印花短袖",  "clothes": "advisor/1.jpg" },
+  { "id": "adv2", "title": "经典字母黑T",   "style": "都市干练 · 基础款",   "clothes": "advisor/2.webp" },
+  { "id": "adv3", "title": "藏青字母印花T", "style": "轻商务 · 图案短袖",  "clothes": "advisor/3.jpg" }
 ]

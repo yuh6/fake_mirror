@@ -43,6 +43,16 @@
               <i class="cr cr-tl"></i><i class="cr cr-tr"></i>
               <i class="cr cr-bl"></i><i class="cr cr-br"></i>
             </div>
+            <!-- 摄像头失败时的错误卡片（不再静默跳过） -->
+            <div class="cam-error" id="camError">
+              <p class="cam-error-title">摄像头无法启动</p>
+              <p class="cam-error-msg" id="camErrorMsg">—</p>
+              <p class="cam-error-diag" id="camErrorDiag"></p>
+              <div class="cam-error-actions">
+                <button class="cam-error-btn" id="camRetry">重试</button>
+                <button class="cam-error-btn ghost" id="camSkip">跳过（示例模式）</button>
+              </div>
+            </div>
           </div>
           <div class="capture-hint" id="captureHint">
             <p class="hint-eyebrow">STEP 01</p>
