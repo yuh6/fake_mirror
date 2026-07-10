@@ -240,8 +240,9 @@ function garmentClothesPath(g) {
 
 async function pickFirstPersonFile() {
   const { readdir } = await import('node:fs/promises');
-  const files = await readdir(join(ROOT, 'data', 'people'));
-  return files.find(f => /\.(jpe?g|png|webp)$/i.test(f)) || null;
+  const files = (await readdir(join(ROOT, 'data', 'people'))).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
+  // 明确优先 "萧帮主.*"（demo 固定人像），否则退回第一个
+  return files.find(f => /^萧帮主\.(jpe?g|png|webp)$/i.test(f)) || files[0] || null;
 }
 
 async function readImageAsDataUrl(path) {
