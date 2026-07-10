@@ -251,14 +251,17 @@
   function takePhoto() {
     const video = $('#mirrorVideo');
     const canvas = $('#mirrorCanvas');
-    const w = video.videoWidth || 720;
-    const h = video.videoHeight || 960;
-    canvas.width = w; canvas.height = h;
+    const vw = video.videoWidth || 1280;
+    const vh = video.videoHeight || 720;
+    // 抓帧与预览一致：顺时针 90° + 镜像；旋转后宽高互换
+    canvas.width = vh;
+    canvas.height = vw;
     const ctx = canvas.getContext('2d');
-    // 与预览一致的镜像
     ctx.save();
-    ctx.translate(w, 0); ctx.scale(-1, 1);
-    ctx.drawImage(video, 0, 0, w, h);
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
     ctx.restore();
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     state.capturedImage = dataUrl;
